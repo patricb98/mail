@@ -127,8 +127,45 @@ function view_email(email_id) {
       })
     }).then();
 
-    // Archive/unarchive button
-    
-    // Reply button
+    // Add archive/unarchive button
+    if (email.recipients.length > 0 && email.sender !== email.recipients[0]) {
+      const archive_button = create_archive_button(email);
+      email_view.appendChild(archive_button);
+    }
+
+    // Add reply button
+    const reply_button = create_reply_button(email);
+    email_view.appendChild(reply_button);
   });
+}
+
+function create_archive_button(email) {
+  // Create button
+  const archive_button = document.createElement('button');
+  archive_button.className = 'btn btn-sm btn-outline-primary';
+  // Check if unarchived or archived 
+  archive_button.innerHTML = email.archived ? 'Unarchive' : 'Archive';
+  // Update email
+  archive_button.addEventListener('click', () => {
+    fetch(`/emails/${email.id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ archived: !email.archived })
+    }).then(() => load_mailbox('inbox'));
+  });
+  return archive_button;
+}
+
+function create_reply_button(email) {
+  // Create button
+  const reply_button = document.createElement('button');
+  reply_button.className = 'btn btn-sm btn-outline-primary';
+  reply_button.innerHTML = 'Reply';
+  // On click compose email with template
+  reply_button.addEventListener('click', () => {
+    compose_email();
+    document.querySelector('#compose-recipients').value = email.sender;
+    document.querySelector('#compose-subject').value = email.subject.startsWith('Re:') ? email.subject : `Re: ${email.subject}`;
+    document.querySelector('#compose-body').value = `On ${email.timestamp}, ${email.sender} wrote:\n${email.body}`;
+  });
+  return reply_button;
 }
